@@ -1,200 +1,112 @@
-# Codex Environment Template
+# Codex 开发环境模板
 
-This repository is a reusable Codex development environment template. Install it into a project when you want an agent-first workflow where the repository is the source of truth, complex work is planned before implementation, each task has a versioned task file, and Codex worker runs leave logs, verification evidence, commits, pushes, and GitHub PRs.
-
-The template is intentionally an MVP. It uses plain files, Python scripts, Git worktrees, `gh`, and the Codex CLI. It never auto-merges and it never commits directly to `main`, `master`, or the detected default branch.
-
-## Requirements
-
-- Git
-- Python 3.10+
-- GitHub CLI: `gh`
-- Codex CLI with `codex exec`
-- A GitHub remote named `origin`
-- `gh auth login` completed for the target repository
-
-## Install
-
-From this template directory, run the installer inside the repository you want to configure:
+> 一条命令，为项目装上 Agent 优先的自动化工作流。
 
 ```bash
-/path/to/codex-env-template/install.sh --profile generic
+curl -sSL https://raw.githubusercontent.com/XuShan0425/-/main/install.sh | bash -s -- --profile generic
 ```
 
-Profiles:
+## 这是什么
+
+一个可复用的 Codex 环境模板。安装后，你的项目自动获得：
+
+- 任务规划 → 隔离执行 → 自动 PR 的完整链路
+- Codex 每次停止时自动提交、推送、创建 PR（绝不碰 main）
+- 版本化的任务文件和执行计划文档
+- 零依赖，纯文件 + Python 脚本 + Git worktree
+
+## 快速开始
 
 ```bash
-/path/to/codex-env-template/install.sh --profile node
-/path/to/codex-env-template/install.sh --profile python
+# 1. 克隆模板
+git clone git@github.com:XuShan0425/-.git /tmp/codex-template
+
+# 2. 进入你的项目
+cd /path/to/your-project
+
+# 3. 安装
+/tmp/codex-template/install.sh --profile generic
+
+# 4. 在 Codex 中信任 hooks
+# 打开 Codex，运行: /hooks
 ```
 
-The installer copies the `project/` template into the current Git repository. Existing files are not overwritten unless you pass `--force`:
+## Profile 选择
+
+| Profile | 适用项目 | 自动检测 |
+|---------|---------|---------|
+| `generic` | 任意项目 | - |
+| `node` | Node.js / TypeScript | eslint, tsc, vitest/jest |
+| `python` | Python | ruff, mypy, pytest |
 
 ```bash
-/path/to/codex-env-template/install.sh --profile python --force
+install.sh --profile node     # Node 项目
+install.sh --profile python   # Python 项目
+install.sh --profile python --force  # 覆盖已有文件
 ```
 
-The installer also appends profile-specific rules to `AGENTS.md` and makes the hook and orchestrator scripts executable.
+## 安装后的目录结构
 
-## Trust Hooks
-
-After installation, open Codex in the project and run:
-
-```text
-/hooks
+```
+your-project/
+├── .codex/
+│   ├── hooks.json                    # Stop hook 配置
+│   └── hooks/stop_auto_pr.py         # 自动 PR Hook
+├── .codex/orchestrator/
+│   └── codex-team.py                 # 规划/执行/集成编排器
+├── .codex-tasks/
+│   ├── active/                       # 进行中的任务
+│   ├── completed/                    # 已完成
+│   ├── failed/                       # 失败
+│   ├── running/                      # 执行中
+│   └── pr-opened/                    # 已提 PR
+├── .codex-runs/                      # 运行日志
+├── docs/exec-plans/
+│   ├── active/                       # 进行中的执行计划
+│   └── completed/                    # 已完成的计划
+├── tests/                            # 测试文件
+└── AGENTS.md                         # (追加了 profile 专属规则)
 ```
 
-Review and trust the project hooks. The Stop hook becomes active only after project hooks are trusted.
+## 三步工作流
 
-The installed hook is:
-
-```text
-.codex/hooks/stop_auto_pr.py
-```
-
-It is called from `.codex/hooks.json` using `$(git rev-parse --show-toplevel)`, so it works when Codex stops from a subdirectory.
-
-## Workflow
-
-### 1. Plan
-
-Ask the orchestrator to create an epic and task files:
+### 1. 规划 → 2. 执行 → 3. 审查
 
 ```bash
-python3 .codex/orchestrator/codex-team.py plan "Add password reset flow with tests"
-```
+# 规划：创建 Epic 和任务文件
+python3 .codex/orchestrator/codex-team.py plan "添加用户认证功能"
 
-The planner runs Codex non-interactively and asks it to create:
-
-- `docs/exec-plans/active/EPIC-*.md`
-- `.codex-tasks/active/TASK-*.md`
-
-Planning mode should not implement business logic.
-
-### 2. Run A Task
-
-Run one task in its own branch and worktree:
-
-```bash
+# 执行：在隔离 worktree 中运行单个任务，自动提 PR
 python3 .codex/orchestrator/codex-team.py run TASK-001
-```
 
-The orchestrator:
-
-- creates a `codex/...` branch
-- creates a Git worktree outside the main working tree
-- runs `codex exec --json --sandbox workspace-write`
-- stores JSONL logs and a run summary under `.codex-runs/`
-- runs verification commands
-- commits, pushes, and opens or updates a GitHub PR with `gh`
-
-### 3. Review The PR
-
-Review the PR in GitHub. The system does not auto-merge.
-
-Useful commands:
-
-```bash
+# 审查：在 GitHub 上查看 PR（系统绝不自动合并）
 gh pr list --head codex/TASK-001
-gh pr checks <pr-number>
 gh pr view <pr-number> --web
-```
 
-### 4. Integrate
-
-Use the conservative integration helper:
-
-```bash
+# 集成：查看当前 Epic 的所有 PR 状态
 python3 .codex/orchestrator/codex-team.py integrate EPIC-001
 ```
 
-The MVP integration command lists relevant PRs and prints next-step commands. It does not merge.
+## 自动化行为
 
-## Stop Hook Behavior
+当你使用 Codex 编辑代码并停止时，Stop Hook 自动：
 
-When Codex stops after editing a trusted project, the Stop hook:
+1. 检测变更 → 无变更则跳过
+2. 创建 `codex/...` 分支（绝不碰 main/master）
+3. 运行 lint / typecheck / test
+4. 验证失败 → 阻止完成，要求修复
+5. 验证通过 → 提交、推送、创建 PR
 
-- reads hook JSON from stdin
-- detects the Git repository root
-- skips clean repositories
-- detects the default branch
-- creates a `codex/...` branch if Codex is on `main`, `master`, the default branch, a detached head, or a non-`codex/` branch
-- detects common Node and Python verification commands
-- blocks if Git is already mid-merge/rebase or if obvious secret or `.env` files are present
-- runs lint, typecheck, and tests when available
-- blocks completion if verification fails
-- stages and commits repository changes
-- pushes the branch
-- creates or updates a GitHub PR using `gh`
+## 安全底线
 
-The hook emits JSON to stdout. On verification failure it returns a block response that asks Codex to fix the failing command.
+- 绝不自动合并
+- 绝不提交到 `main`/`master`
+- 拦截 `.env` 和密钥文件
+- 不在 `shell=True` 下执行外部命令
+- 所有 PR 需要人工审查后合并
 
-## Safety Assumptions
+## 环境要求
 
-- Auto PR is enabled by committed project files, not environment variables.
-- The Stop hook never auto-merges.
-- The Stop hook refuses to commit to `main`, `master`, or the detected default branch.
-- Branches created by automation use the `codex/...` prefix.
-- Verification failures are not hidden. They block completion.
-- Obvious secret files and `.env` files are blocked before auto-commit.
-- Python scripts use subprocess argv lists and do not use `shell=True`.
-- Work should happen in clean task worktrees when possible.
-- Secrets must not be committed. Review diffs and PRs before merging.
-
-## Node Example
-
-Install:
-
-```bash
-/path/to/codex-env-template/install.sh --profile node
-```
-
-Expected scripts in `package.json`:
-
-```json
-{
-  "scripts": {
-    "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run"
-  }
-}
-```
-
-The hook and orchestrator detect `pnpm-lock.yaml`, `yarn.lock`, `bun.lockb`, and `package-lock.json` to choose the package manager.
-
-## Python Example
-
-Install:
-
-```bash
-/path/to/codex-env-template/install.sh --profile python
-```
-
-Typical verification files:
-
-```text
-pyproject.toml
-pytest.ini
-ruff.toml
-mypy.ini
-tests/
-```
-
-The hook and orchestrator run available commands such as:
-
-```bash
-ruff check .
-mypy .
-python3 -m pytest
-```
-
-## Manual Stop Hook Test
-
-You can run the hook manually from a repository after installation:
-
-```bash
-printf '{}\n' | python3 .codex/hooks/stop_auto_pr.py
-```
-
-If there are no changes, it returns a JSON approval response and skips PR creation.
+- Git / Python 3.10+ / GitHub CLI (`gh`)
+- Codex CLI（支持 `codex exec`）
+- 目标仓库已完成 `gh auth login`
