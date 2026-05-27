@@ -110,3 +110,22 @@ python3 .codex/orchestrator/codex-team.py integrate EPIC-001
 - Git / Python 3.10+ / GitHub CLI (`gh`)
 - Codex CLI（支持 `codex exec`）
 - 目标仓库已完成 `gh auth login`
+
+## 内置 Skill
+
+安装模板时会同步安装 10 个精选 Skill 到 `~/.codex/skills/` 和 `~/.agents/skills/`，Codex/Claude 按需自动调用：
+
+| Skill | 类型 | 作用 |
+|-------|------|------|
+| `agent-planner` | Agent | 复杂需求拆解为 EPIC/TASK |
+| `agent-worker` | Agent | 隔离执行单个任务 |
+| `agent-reviewer` | Agent | 检查 PR 的 bug、边界、测试 |
+| `agent-integrator` | Agent | 整合多个任务 PR |
+| `gh-address-comments` | Codex | 处理 PR review 反馈 |
+| `gh-fix-ci` | Codex | 诊断并修复 CI 失败 |
+| `yeet` | Codex | 快速提交、推送、提 PR |
+| `github` | Plugin | GitHub Issue/PR/仓库读写 |
+| `find-skills` | Agent | 发现和推荐缺失的 skill |
+| `auto-skill-installer` | Codex | 上下文感知的自动装 skill |
+
+已安装的 skill 不会重复安装。用 `./install-skills.sh --dry-run` 预览安装计划。

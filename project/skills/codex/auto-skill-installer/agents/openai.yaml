@@ -1,0 +1,4 @@
+interface:
+  display_name: "Auto Skill Installer"
+  short_description: "Finds, installs, verifies, and explains agent skills from a task description"
+  default_prompt: "Find the best matching Agent Skill for my request from GitHub or agentskills.io, install it into ~/.codex/skills, verify the installation, and tell me the exact commands I can use next."

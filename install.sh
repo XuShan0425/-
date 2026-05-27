@@ -114,6 +114,14 @@ fi
 
 chmod +x "$TARGET_ROOT/.codex/hooks/stop_auto_pr.py" 2>/dev/null || true
 chmod +x "$TARGET_ROOT/.codex/orchestrator/codex-team.py" 2>/dev/null || true
+chmod +x "$TARGET_ROOT/install-skills.sh" 2>/dev/null || true
+
+# Install bundled skills
+if [[ -x "$TARGET_ROOT/install-skills.sh" ]]; then
+  echo ""
+  echo "Installing bundled skills..."
+  "$TARGET_ROOT/install-skills.sh"
+fi
 
 cat <<NEXT_STEPS
 
@@ -127,11 +135,15 @@ Next steps:
   2. Open Codex in this repository and trust project hooks:
      /hooks
 
-  3. Plan work:
+  3. Plan work (agent-planner will be auto-invoked):
      python3 .codex/orchestrator/codex-team.py plan "Describe the requirement"
 
-  4. Run a task:
+  4. Run a task (agent-worker will be auto-invoked):
      python3 .codex/orchestrator/codex-team.py run TASK-001
+
+Installed skills: agent-planner, agent-worker, agent-reviewer,
+  agent-integrator, find-skills, gh-address-comments, gh-fix-ci,
+  yeet, auto-skill-installer, github
 
 Safety:
   - Automation uses codex/... branches.

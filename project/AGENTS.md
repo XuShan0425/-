@@ -2,6 +2,25 @@
 
 Human steers. Agents execute. The repository is the source of truth.
 
+## Available Skills
+
+This template bundles skills that Codex / Claude will auto-invoke when relevant:
+
+| Skill | Triggers when |
+|-------|--------------|
+| `agent-planner` | Planning complex requirements into EPIC/TASK files |
+| `agent-worker` | Executing a task from `.codex-tasks/active/` |
+| `agent-reviewer` | Reviewing PRs or task implementations |
+| `agent-integrator` | Integrating multiple task PRs |
+| `gh-address-comments` | Addressing PR review comments |
+| `gh-fix-ci` | Diagnosing and fixing CI failures |
+| `yeet` | Creating commits, pushing, and opening PRs |
+| `github` | Reading/writing GitHub issues, PRs, and repos |
+| `find-skills` | Discovering and installing missing skills |
+| `auto-skill-installer` | Auto-installing skills based on context |
+
+Run `./install-skills.sh --dry-run` to preview or re-install.
+
 ## Default Workflow
 
 Before implementation:
