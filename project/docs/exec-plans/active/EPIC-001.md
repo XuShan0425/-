@@ -1,25 +1,26 @@
-# EPIC-001 - Stop hook hardening
+# EPIC-001 — 项目基础设施
 
 ## Goal
 
-Harden `.codex/hooks/stop_auto_pr.py` so the Stop hook only emits JSON, blocks unsafe commits, runs the right verification commands, and manages branch/PR flow without auto-merging.
+搭建 Docker Compose 开发环境 + PostgreSQL 初始化 + FastAPI 骨架 + 基础鉴权。这是所有后续 EPIC 的底座。
 
 ## Scope
 
-- Stop-hook input parsing and JSON output
-- Clean-repo continue behavior
-- Protected-branch branch creation
-- Verification detection and failure blocking
-- Secret-path commit refusal
-- Commit, fetch, rebase, push, and PR update flow
-- Small helper tests
+- Docker Compose 编排（FastAPI + PostgreSQL + Redis）
+- PostgreSQL 初始化脚本（按 CLAUDE.md 数据模型建表）
+- FastAPI 项目骨架与路由结构
+- 基础鉴权（JWT + 简单的用户管理）
+- 健康检查端点
+- 项目的 pyproject.toml / 依赖管理
 
 ## Acceptance Criteria
 
-- Clean repositories return a valid continue JSON response.
-- Verification failures block completion and do not commit.
-- Secret-like files are refused before commit.
-- Protected branches never receive direct commits.
-- Successful runs commit, push, and create or update a PR with verification and diff details.
-- The hook never auto-merges and never writes non-JSON to stdout.
+- `docker compose up` 一键启动全部服务
+- FastAPI `/health` 返回 200
+- PostgreSQL 数据持久化、表结构正确
+- JWT 登录/验证流程可用
+- API 文档（Swagger）可通过浏览器访问
 
+## Branch
+
+`feature/epic-001-infra`
