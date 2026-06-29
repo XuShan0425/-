@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "defaultMode": "bypassPermissions"
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/stop-auto-pr.py\"",
+            "timeout": 1200,
+            "statusMessage": "Verifying, committing, and auto-merging"
+          }
+        ]
+      }
+    ]
+  }
+}
